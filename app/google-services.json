@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1094584605959",
+    "firebase_url": "https://ajm-task2.firebaseio.com",
+    "project_id": "ajm-task2",
+    "storage_bucket": "ajm-task2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094584605959:android:7a20e9610bcb114f6879a2",
+        "android_client_info": {
+          "package_name": "com.divyanshu.ajmtask2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1094584605959-qbqo91pebu6ch1qc2m8lg7k23g9n3pa5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.divyanshu.ajmtask2",
+            "certificate_hash": "f58b9bc2400ea878f760d7ee03ed965286ec9a92"
+          }
+        },
+        {
+          "client_id": "1094584605959-6j31cfuk6asaof09uf2jgmtt5rfd6bi0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxmQLNCg1iFOkTfHFSWaT0slYvVis_ZLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1094584605959-6j31cfuk6asaof09uf2jgmtt5rfd6bi0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
