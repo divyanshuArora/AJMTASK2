@@ -27,11 +27,11 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import java.util.*
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener
-{
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
+    GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private var mMap: GoogleMap? = null
     private var mFusedLocationClient: FusedLocationProviderClient? = null
     private var lat = ""
@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     private var mDatabase: FirebaseDatabase? = null
     private var REQUEST_LOCATION_PERMS = 11111
     private var userType = ""
+    private var firebaseData: DatabaseReference? = null
+    var userLatLng: LatLng? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -53,11 +55,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             .findFragmentById(R.id.googleMaps) as SupportMapFragment?
         mapFragment!!.getMapAsync(this)
 
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-        mDatabase = FirebaseDatabase.getInstance()
 
+
+        if (mDatabase == null) {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
+            mDatabase = FirebaseDatabase.getInstance()
+        }
         SetPermission()
         startTimer()
+        startTimerForLoad()
     }
 
 
@@ -125,47 +131,48 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
             return
         }
 
-        mFusedLocationClient!!.lastLocation.addOnSuccessListener(this@MainActivity,
-            OnSuccessListener<Location> { location ->
-                // Got last known location. In some rare situations this can be null.
-                if (location != null) {
-                    lat = location.latitude.toString() + ""
-                    lng = location.longitude.toString() + ""
-                    Log.e("latlongs", "$lat <==> $lng")
-                    //                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                    //                    DatabaseReference myRef = database.getReference("LatLngs");
-                    //
-                    //                    myRef.setValue(lat+" "+lng);
+        mFusedLocationClient!!.lastLocation.addOnSuccessListener(
+            this@MainActivity
+        ) { location ->
+            // Got last known location. In some rare situations this can be null.
+            if (location != null) {
+                lat = location.latitude.toString() + ""
+                lng = location.longitude.toString() + ""
+                Log.e("latlongs", "$lat <==> $lng")
+                //                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                //                    DatabaseReference myRef = database.getReference("LatLngs");
+                //
+                //                    myRef.setValue(lat+" "+lng);
 
 
-                    if (userType == "1")
-                    {
-                        val mRef = mDatabase!!.getReference("User1LatLng")
-                        mRef.setValue("$lat $lng")
-                    }
-                    else
-                    {
-                        val mRef2 = mDatabase!!.getReference("User2LatLng")
-                        mRef2.setValue("$lat $lng")
-                    }
-
-
-
-                    mMap!!.addMarker(MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("currentLocation")
-                    )
-
-                    val cameraPosition = CameraPosition.Builder()
-                        .target(LatLng(location.latitude, location.longitude)).zoom(16.0f).build()
-
-                    mMap!!.moveCamera(
-                        CameraUpdateFactory
-                            .newCameraPosition(cameraPosition)
-                    )
-
+                if (userType == "1") {
+                    val mRef = mDatabase!!.getReference("User1LatLng")
+                    mRef.setValue("$lat $lng")
+                } else {
+                    val mRef2 = mDatabase!!.getReference("User2LatLng")
+                    mRef2.setValue("$lat $lng")
                 }
-            })
-    }
 
+                mMap!!.addMarker(
+                    MarkerOptions().position(
+                        LatLng(
+                            location.latitude,
+                            location.longitude
+                        )
+                    ).title("currentLocation")
+                )
+
+                val cameraPosition = CameraPosition.Builder()
+                    .target(LatLng(location.latitude, location.longitude)).zoom(16.0f).build()
+
+                mMap!!.moveCamera(
+                    CameraUpdateFactory
+                        .newCameraPosition(cameraPosition)
+                )
+
+            }
+        }
+    }
 
 
     private fun buildAlertMessageNoGps() {
@@ -188,7 +195,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     }
 
 
-
     private fun startTimer() {
         mTimer1 = Timer()
         mTt1 = object : TimerTask() {
@@ -200,8 +206,55 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         mTimer1!!.schedule(mTt1, 1, 10000)
     }
 
+    private fun startTimerForLoad() {
+        mTimer1 = Timer()
+        mTt1 = object : TimerTask() {
+            override fun run() {
+                mTimerHandler.post { getLatLng() }
+            }
+        }
+
+        mTimer1!!.schedule(mTt1, 1, 12000)
+    }
+
+    private fun getLatLng() {
+        firebaseData = FirebaseDatabase.getInstance().getReference("ajm-task2");
+        Log.d("Dash", " db ref :" + firebaseData);
+
+        if (userType.equals("1")) {
+            firebaseData!!.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.d("MainActivity", "user1LatLng: $p0")
+                }
+
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val user2LatLng = dataSnapshot.child("User2LatLng").getValue().toString()
+                    Log.d("MainActivity", "user2LatLng: $user2LatLng")
+
+                }
+
+            })
+        }
+        else
+        {
+            firebaseData!!.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.d("MainActivity", "user1LatLng: $p0")
+                }
+
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val user1LatLng = dataSnapshot.child("User1LatLng").getValue().toString()
+                    Log.d("MainActivity", "user1LatLng: $user1LatLng")
+
+                }
+
+            })
 
 
+        }
+
+
+    }
 
     override fun onMapReady(p0: GoogleMap?) {
         mMap = p0
@@ -240,8 +293,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
         super.onBackPressed()
         finishAffinity()
     }
-
-
 
 
 }
