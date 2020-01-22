@@ -58,8 +58,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
 
 
         if (mDatabase == null) {
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
+//            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             mDatabase = FirebaseDatabase.getInstance()
+            mDatabase!!.setPersistenceEnabled(true);
         }
         SetPermission()
         startTimer()
@@ -139,11 +140,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                 lat = location.latitude.toString() + ""
                 lng = location.longitude.toString() + ""
                 Log.e("latlongs", "$lat <==> $lng")
-                //                    FirebaseDatabase database = FirebaseDatabase.getInstance();
-                //                    DatabaseReference myRef = database.getReference("LatLngs");
-                //
-                //                    myRef.setValue(lat+" "+lng);
-
 
                 if (userType == "1") {
                     val mRef = mDatabase!!.getReference("User1LatLng")
@@ -152,24 +148,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
                     val mRef2 = mDatabase!!.getReference("User2LatLng")
                     mRef2.setValue("$lat $lng")
                 }
-
-                mMap!!.addMarker(
-                    MarkerOptions().position(
-                        LatLng(
-                            location.latitude,
-                            location.longitude
-                        )
-                    ).title("currentLocation")
-                )
-
-                val cameraPosition = CameraPosition.Builder()
-                    .target(LatLng(location.latitude, location.longitude)).zoom(16.0f).build()
-
-                mMap!!.moveCamera(
-                    CameraUpdateFactory
-                        .newCameraPosition(cameraPosition)
-                )
-
             }
         }
     }
@@ -218,47 +196,82 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Co
     }
 
     private fun getLatLng() {
-        firebaseData = FirebaseDatabase.getInstance().getReference("ajm-task2");
-        Log.d("Dash", " db ref :" + firebaseData);
-
         if (userType.equals("1")) {
-            firebaseData!!.addListenerForSingleValueEvent(object : ValueEventListener {
+            val rootRef = FirebaseDatabase.getInstance().getReference("User2LatLng")
+            rootRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onCancelled(p0: DatabaseError) {
-                    Log.d("MainActivity", "user1LatLng: $p0")
+                    Log.d("MainActivity", "user21LatLng: $p0")
                 }
 
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val user2LatLng = dataSnapshot.child("User2LatLng").getValue().toString()
-                    Log.d("MainActivity", "user2LatLng: $user2LatLng")
+                override fun onDataChange(p0: DataSnapshot) {
+                    Log.d("MainActivity_type2", "user2LatLng: ${p0.value}")
 
+                    var latlng = p0.value.toString().split(" ")
+                    Log.d("MainActivity_type2", "lat: ${latlng[0]}")
+                    Log.d("MainActivity_type2", "lng: ${latlng[1]}")
+
+                    mMap!!.addMarker(
+                        MarkerOptions().position(
+                            LatLng(
+                                latlng[0].toDouble(), latlng[1].toDouble()
+                            )
+                        ).title("User2 : "+getMesureLatLang(latlng[0].toDouble(), latlng[1].toDouble()).toString()+" km")
+                    )
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(LatLng(latlng[0].toDouble(), latlng[1].toDouble())).zoom(16.0f).build()
+
+                    mMap!!.moveCamera(
+                        CameraUpdateFactory
+                            .newCameraPosition(cameraPosition)
+                    )
                 }
-
             })
         }
         else
         {
-            firebaseData!!.addListenerForSingleValueEvent(object : ValueEventListener {
+            val rootRef = FirebaseDatabase.getInstance().getReference("User1LatLng")
+            rootRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onCancelled(p0: DatabaseError) {
-                    Log.d("MainActivity", "user1LatLng: $p0")
+                    Log.d("MainActivity1", "user1LatLng: $p0")
                 }
+                override fun onDataChange(p0: DataSnapshot) {
+                    Log.d("MainActivity_type1", "user1LatLng: ${p0.value}")
+                    var latlng = p0.value.toString().split(" ")
+                    Log.d("MainActivity_type1", "lat: ${latlng[0]}")
+                    Log.d("MainActivity_type1", "lng: ${latlng[1]}")
+                    mMap!!.addMarker(
+                        MarkerOptions().position(
+                            LatLng(
+                                latlng[0].toDouble(), latlng[1].toDouble()
+                            )
+                        ).title("User1 : "+getMesureLatLang(latlng[0].toDouble(), latlng[1].toDouble()).toString()+" km")
+                    )
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(LatLng(latlng[0].toDouble(), latlng[1].toDouble())).zoom(16.0f).build()
 
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val user1LatLng = dataSnapshot.child("User1LatLng").getValue().toString()
-                    Log.d("MainActivity", "user1LatLng: $user1LatLng")
-
+                    mMap!!.moveCamera(
+                        CameraUpdateFactory
+                            .newCameraPosition(cameraPosition)
+                    )
                 }
-
             })
-
-
         }
+    }
 
-
+    fun getMesureLatLang(latitude:Double, langitude:Double):Float {
+        val loc1 = Location("")
+        loc1.latitude = lat.toDouble()// current latitude
+        loc1.longitude = lng.toDouble()//current Longitude
+        val loc2 = Location("")
+        loc2.latitude = latitude
+        loc2.longitude = langitude
+        return loc1.distanceTo(loc2)
     }
 
     override fun onMapReady(p0: GoogleMap?) {
         mMap = p0
     }
+
 
     override fun onConnected(p0: Bundle?) {
 
